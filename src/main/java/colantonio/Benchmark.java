@@ -49,7 +49,7 @@ public class Benchmark {
 
         /**
          * @param a an array of integers
-         * @return a ConciseSet representing the provided integers
+         * @return a ConciseSetTest representing the provided integers
          */
         public static ConciseSet toConciseSet(final int[] a) {
                 ConciseSet cs = new ConciseSet();
@@ -71,7 +71,7 @@ public class Benchmark {
 
         /**
          * @param a an array of integers
-         * @return a ConciseSet (in WAH mode) representing the provided integers
+         * @return a ConciseSetTest (in WAH mode) representing the provided integers
          */
         public static ConciseSet toWAHConciseSet(int[] a) {
                 ConciseSet cs = new ConciseSet(true);
