@@ -1,104 +1,86 @@
 package bitmapbenchmarks.synth.impl;
 
-import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.BitSet;
 
-public class JavaBitSetTest extends AbstractBitsetTest {
+public class JavaBitSetTest extends AbstractBitsetTest2<BitSet> {
 
-    public long test(int[][] data, int repeat, DecimalFormat df) {
-        System.out.println("# BitSet");
-        System.out
-                .println("# size, construction time, time to recover set bits, time to compute unions, intersections, xor ");
-        long bef, aft;
-        String line = "";
-        long bogus = 0;
-        int N = data.length;
-        bef = System.currentTimeMillis();
-        BitSet[] bitmap = new BitSet[N];
-        int size = 0;
-        for (int r = 0; r < repeat; ++r) {
-            size = 0;
-            for (int k = 0; k < N; ++k) {
-                bitmap[k] = new BitSet();
-                for (int x = 0; x < data[k].length; ++x) {
-                    bitmap[k].set(data[k][x]);
-                }
-                size += bitmap[k].size() / 8;
-            }
-        }
-        aft = System.currentTimeMillis();
-        line += "\t" + size / 1024;
-        line += "\t" + df.format((aft - bef) / 1000.0);
-        // uncompressing
-        bef = System.currentTimeMillis();
-        for (int r = 0; r < repeat; ++r)
-            for (int k = 0; k < N; ++k) {
-                int[] array = new int[bitmap[k].cardinality()];
-                int pos = 0;
-                for (int i = bitmap[k].nextSetBit(0); i >= 0; i = bitmap[k].nextSetBit(i + 1)) {
-                    array[pos++] = i;
-                }
-            }
-        aft = System.currentTimeMillis();
-        line += "\t" + df.format((aft - bef) / 1000.0);
-        // logical or + retrieval
-        bef = System.currentTimeMillis();
-        for (int r = 0; r < repeat; ++r)
-            for (int k = 0; k < N; ++k) {
-                BitSet bitmapor = (BitSet) bitmap[0].clone();
-                for (int j = 1; j < k + 1; ++j) {
-                    bitmapor.or(bitmap[j]);
-                }
-                int[] array = new int[bitmapor.cardinality()];
-                int pos = 0;
-                for (int i = bitmapor.nextSetBit(0); i >= 0; i = bitmapor.nextSetBit(i + 1)) {
-                    array[pos++] = i;
-                }
-                bogus += array[array.length - 1];
-            }
-        aft = System.currentTimeMillis();
-        line += "\t" + df.format((aft - bef) / 1000.0);
-        // logical and + retrieval
-        bef = System.currentTimeMillis();
-        for (int r = 0; r < repeat; ++r)
-            for (int k = 0; k < N; ++k) {
-                BitSet bitmapand = (BitSet) bitmap[0].clone();
-                for (int j = 1; j < k + 1; ++j) {
-                    bitmapand.and(bitmap[j]);
-                }
-                int[] array = new int[bitmapand.cardinality()];
-                int pos = 0;
-                for (int i = bitmapand.nextSetBit(0); i >= 0; i = bitmapand.nextSetBit(i + 1)) {
-                    array[pos++] = i;
-                }
-                if (array.length > 0)
-                    bogus += array[array.length - 1];
-            }
-        aft = System.currentTimeMillis();
-        line += "\t" + df.format((aft - bef) / 1000.0);
-        // logical xor + retrieval
-        bef = System.currentTimeMillis();
-        for (int r = 0; r < repeat; ++r)
-            for (int k = 0; k < N; ++k) {
-                BitSet bitmapand = (BitSet) bitmap[0].clone();
-                for (int j = 1; j < k + 1; ++j) {
-                    bitmapand.xor(bitmap[j]);
-                }
-                int[] array = new int[bitmapand.cardinality()];
-                int pos = 0;
-                for (int i = bitmapand.nextSetBit(0); i >= 0; i = bitmapand
-                        .nextSetBit(i + 1)) {
-                    array[pos++] = i;
-                }
-                if (array.length > 0)
-                    bogus += array[array.length - 1];
-            }
-        aft = System.currentTimeMillis();
-        line += "\t" + df.format((aft - bef) / 1000.0);
-
-
-        System.out.println(line);
-        return bogus;
+    @Override
+    public String getDescription() {
+        return "Java BitSet";
     }
 
+    @Override
+    public BitSet createEmpty() {
+        return new BitSet();
+    }
+
+    @Override
+    public void setBit(BitSet bitSet, int bit) {
+        bitSet.set(bit);
+    }
+
+    @Override
+    public int[] toArray(BitSet bitSet) {
+        int[] array = new int[bitSet.cardinality()];
+        int pos = 0;
+        for (int i = bitSet.nextSetBit(0); i >= 0; i = bitSet.nextSetBit(i + 1)) {
+            array[pos++] = i;
+        }
+
+        return array;
+    }
+
+    @Override
+    public BitSet or(BitSet first, BitSet second) {
+        BitSet result = (BitSet) first.clone();
+        result.or(second);
+        return result;
+    }
+
+    @Override
+    public BitSet orAll(BitSet... set) {
+        BitSet result = (BitSet) set[0].clone();
+        for (int j = 1; j < set.length; ++j) {
+            result.or(set[j]);
+        }
+        return result;
+    }
+
+    @Override
+    public BitSet and(BitSet first, BitSet second) {
+        BitSet result = (BitSet) first.clone();
+        result.and(second);
+        return result;
+    }
+
+    @Override
+    public BitSet andAll(BitSet... set) {
+        BitSet result = (BitSet) set[0].clone();
+        for (int j = 1; j < set.length; ++j) {
+            result.and(set[j]);
+        }
+        return result;
+    }
+
+    @Override
+    public BitSet xor(BitSet first, BitSet second) {
+        BitSet result = (BitSet) first.clone();
+        result.xor(second);
+        return result;
+    }
+
+    @Override
+    public BitSet xorAll(BitSet... set) {
+        BitSet result = (BitSet) set[0].clone();
+        for (int j = 1; j < set.length; ++j) {
+            result.xor(set[j]);
+        }
+        return result;
+    }
+
+    @Override
+    public BitSet[] convertToArray(ArrayList<BitSet> l, int n) {
+        return l.toArray(new BitSet[n]);
+    }
 }

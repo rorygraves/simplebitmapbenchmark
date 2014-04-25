@@ -1,66 +1,109 @@
 package bitmapbenchmarks.synth.impl;
 
-import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 
-public class HashSetTest  extends AbstractBitsetTest{
+public class HashSetTest extends AbstractBitsetTest2<HashSet<Integer>> {
+    @Override
+    public String getDescription() {
+        return "# Hash Set";
+    }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public long test(int[][] data, int repeat, DecimalFormat df) {
-        System.out.println("# Hash Set");
-        System.out.println("# size, construction time, time to recover set bits, time to compute unions and intersections ");
-        long bef, aft;
-        String line = "";
-        long bogus = 0;
-        int N = data.length;
-        bef = System.currentTimeMillis();
-        HashSet<Integer>[] bitmap = new HashSet[N];
-        int size = 0;
-        for (int r = 0; r < repeat; ++r) {
-            size = 0;
-            for (int k = 0; k < N; ++k) {
-                bitmap[k] = new HashSet<Integer>();
-                for (int x = 0; x < data[k].length; ++x) {
-                    bitmap[k].add(data[k][x]);
+    public HashSet<Integer> createEmpty() {
+        return new HashSet<Integer>();
+    }
+
+    @Override
+    public void setBit(HashSet<Integer> hs, int bit) {
+        hs.add(bit);
+    }
+
+    @Override
+    public int[] toArray(HashSet<Integer> hs) {
+
+        int[] array = new int[hs.size()];
+        int idx = 0;
+        for(int i : hs)
+            array[idx++] = i;
+        Arrays.sort(array);
+        return array;
+    }
+
+    @Override
+    public HashSet<Integer> or(HashSet<Integer> first, HashSet<Integer> second) {
+        HashSet<Integer> result = new HashSet<Integer>();
+        result.addAll(first);
+        result.addAll(second);
+        return result;
+    }
+
+    @Override
+    public HashSet<Integer> orAll(HashSet<Integer>... set) {
+        HashSet<Integer> result = new HashSet<Integer>();
+        for (HashSet<Integer> s : set) {
+            result.addAll(s);
+        }
+        return result;
+    }
+
+    @Override
+    public HashSet<Integer> and(HashSet<Integer> first, HashSet<Integer> second) {
+        HashSet<Integer> result = (HashSet<Integer>) first.clone();
+        result.retainAll(second);
+        return result;
+    }
+
+    @Override
+    public HashSet<Integer> andAll(HashSet<Integer>... set) {
+        HashSet<Integer> result = null;
+        for(HashSet<Integer> s : set) {
+            if(result == null)
+                result = (HashSet<Integer>) s.clone();
+            else
+                result.retainAll(s);
+        }
+        return result;
+    }
+
+    @Override
+    public HashSet<Integer> xor(HashSet<Integer> first, HashSet<Integer> second) {
+        // take a copy of first and remove all the elements in second
+        HashSet<Integer> result = (HashSet<Integer>) first.clone();
+        result.removeAll(second);
+
+        // take a clone of second and remove all elements in first collection
+        HashSet<Integer> secondOnly = (HashSet<Integer>) second.clone();
+        secondOnly.removeAll(first);
+
+        // combine result
+        result.addAll(secondOnly);
+        return result;
+    }
+
+    @Override
+    public HashSet<Integer> xorAll(HashSet<Integer>... set) {
+        HashSet<Integer> seen = new HashSet<Integer>();
+        HashSet<Integer> result = new HashSet<Integer>();
+
+        for(HashSet<Integer> s : set) {
+            for(Integer i : s) {
+                // if we have seen it already its not exclusive so remove from results
+                if(seen.contains(i))
+                    result.remove(i);
+                else {
+                    seen.add(i);
+                    result.add(i);
                 }
             }
         }
-        aft = System.currentTimeMillis();
-        line += "\t" + size / 1024;
-        line += "\t" + df.format((aft - bef) / 1000.0);
-        // uncompressing
-        bef = System.currentTimeMillis();
-        aft = System.currentTimeMillis();
-        line += "\t" + df.format((aft - bef) / 1000.0);
-        // logical or
-        bef = System.currentTimeMillis();
-        for (int r = 0; r < repeat; ++r)
-            for (int k = 0; k < N; ++k) {
-                HashSet<Integer> bitmapor = new HashSet<Integer>();
-                for (int j = 0; j < k + 1; ++j) {
-                    bitmapor.addAll(bitmap[k]);
-                }
-                bogus += bitmapor.size();
-            }
-        aft = System.currentTimeMillis();
-        line += "\t" + df.format((aft - bef) / 1000.0);
 
-        // logical and + extraction
-        bef = System.currentTimeMillis();
-        for (int r = 0; r < repeat; ++r)
-            for (int k = 0; k < N; ++k) {
-                HashSet<Integer> bitmapand = (HashSet<Integer>) bitmap[0]
-                        .clone();
-                for (int j = 1; j < k + 1; ++j) {
-                    bitmapand.retainAll(bitmap[j]);
-                }
-                bogus += bitmapand.size();
-            }
-        aft = System.currentTimeMillis();
-        line += "\t" + df.format((aft - bef) / 1000.0);
+        return result;
+    }
 
-        System.out.println(line);
-        return bogus;
+    @Override
+    public HashSet<Integer>[] convertToArray(ArrayList<HashSet<Integer>> l, int n) {
+        return (HashSet<Integer>[]) l.toArray(new HashSet<?>[n]);
     }
 }

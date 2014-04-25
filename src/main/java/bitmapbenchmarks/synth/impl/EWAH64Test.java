@@ -3,84 +3,62 @@ package bitmapbenchmarks.synth.impl;
 import com.googlecode.javaewah.EWAHCompressedBitmap;
 
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 
-public class EWAH64Test extends AbstractBitsetTest {
+public class EWAH64Test extends AbstractBitsetTest2<EWAHCompressedBitmap> {
+    @Override
+    public String getDescription() {
+        return "# EWAH using the javaewah library";
+    }
 
     @Override
-    public long test(int[][] data, int repeat, DecimalFormat df) {
-        System.out.println("# EWAH using the javaewah library");
-        System.out.println("# size, construction time, time to recover set bits, time to compute unions, intersections, xor");
-        long bef, aft;
-        String line = "";
-        long bogus = 0;
-        int N = data.length;
-        bef = System.currentTimeMillis();
-        EWAHCompressedBitmap[] ewah = new EWAHCompressedBitmap[N];
-        int size = 0;
-        for (int r = 0; r < repeat; ++r) {
-            size = 0;
-            for (int k = 0; k < N; ++k) {
-                ewah[k] = new EWAHCompressedBitmap();
-                for (int x = 0; x < data[k].length; ++x) {
-                    ewah[k].set(data[k][x]);
-                }
-                ewah[k].trim();
-                size += ewah[k].sizeInBytes();
-            }
-        }
-        aft = System.currentTimeMillis();
-        line += "\t" + size / 1024;
-        line += "\t" + df.format((aft - bef) / 1000.0);
-        // uncompressing
-        bef = System.currentTimeMillis();
-        for (int r = 0; r < repeat; ++r)
-            for (int k = 0; k < N; ++k) {
-                int[] array = ewah[k].toArray();
-                bogus += array.length;
-            }
-        aft = System.currentTimeMillis();
-        line += "\t" + df.format((aft - bef) / 1000.0);
+    public EWAHCompressedBitmap createEmpty() {
+        return new EWAHCompressedBitmap();
+    }
 
-        // fast logical or + retrieval
-        bef = System.currentTimeMillis();
-        for (int r = 0; r < repeat; ++r)
-            for (int k = 0; k < N; ++k) {
-                EWAHCompressedBitmap bitmapor = EWAHCompressedBitmap.or(Arrays
-                        .copyOf(ewah, k + 1));
-                int[] array = bitmapor.toArray();
-                bogus += array[array.length - 1];
-            }
-        aft = System.currentTimeMillis();
-        line += "\t" + df.format((aft - bef) / 1000.0);
+    @Override
+    public void setBit(EWAHCompressedBitmap cb, int bit) {
+        cb.set(bit);
+    }
 
-        // fast logical and + retrieval 2-by-2
-        bef = System.currentTimeMillis();
-        for (int r = 0; r < repeat; ++r)
-            for (int k = 0; k < N; ++k) {
-                EWAHCompressedBitmap bitmapand = EWAHCompressedBitmap
-                        .and(Arrays.copyOf(ewah, k + 1));
-                int[] array = bitmapand.toArray();
-                if (array.length > 0)
-                    bogus += array[array.length - 1];
-            }
-        aft = System.currentTimeMillis();
-        line += "\t" + df.format((aft - bef) / 1000.0);
+    @Override
+    public int[] toArray(EWAHCompressedBitmap cb) {
+        return cb.toArray();
+    }
 
-        // fast logical xor + retrieval 2-by-2
-        bef = System.currentTimeMillis();
-        for (int r = 0; r < repeat; ++r)
-            for (int k = 0; k < N; ++k) {
-                EWAHCompressedBitmap bitmapand = EWAHCompressedBitmap
-                        .xor(Arrays.copyOf(ewah, k + 1));
-                int[] array = bitmapand.toArray();
-                if (array.length > 0)
-                    bogus += array[array.length - 1];
-            }
-        aft = System.currentTimeMillis();
-        line += "\t" + df.format((aft - bef) / 1000.0);
+    @Override
+    public EWAHCompressedBitmap or(EWAHCompressedBitmap first, EWAHCompressedBitmap second) {
+        return first.or(second);
+    }
 
-        System.out.println(line);
-        return bogus;
+    @Override
+    public EWAHCompressedBitmap orAll(EWAHCompressedBitmap... set) {
+        return EWAHCompressedBitmap.or(set);
+    }
+
+    @Override
+    public EWAHCompressedBitmap and(EWAHCompressedBitmap first, EWAHCompressedBitmap second) {
+        return first.and(second);
+    }
+
+    @Override
+    public EWAHCompressedBitmap andAll(EWAHCompressedBitmap... set) {
+        return EWAHCompressedBitmap.and(set);
+    }
+
+    @Override
+    public EWAHCompressedBitmap xor(EWAHCompressedBitmap first, EWAHCompressedBitmap second) {
+        return first.xor(second);
+    }
+
+    @Override
+    public EWAHCompressedBitmap xorAll(EWAHCompressedBitmap... set) {
+        return EWAHCompressedBitmap.xor(set);
+    }
+
+    @Override
+    public EWAHCompressedBitmap[] convertToArray(ArrayList<EWAHCompressedBitmap> l, int n) {
+        return l.toArray(new EWAHCompressedBitmap[n]);
     }
 }

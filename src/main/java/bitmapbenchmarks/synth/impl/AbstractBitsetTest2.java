@@ -1,7 +1,10 @@
 package bitmapbenchmarks.synth.impl;
 
+import objectexplorer.MemoryMeasurer;
+
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public abstract class AbstractBitsetTest2<T> {
     public long test(int[][] data, int repeat, DecimalFormat df) {
@@ -16,11 +19,23 @@ public abstract class AbstractBitsetTest2<T> {
 
     public abstract T createEmpty();
     public abstract void setBit(T t,int bit);
-    public abstract int size(T t);
     public abstract int[] toArray(T t);
-    public abstract T or(T base,T... additional);
+    /** logical or two bitsets - must not modify the original bitmaps */
+    public abstract T or(T first,T second);
+    /** logical or a collection, must not modify the original bitsets */
+    public abstract T orAll(T... set);
     public abstract T and(T first,T second);
+    public abstract T andAll(T... set);
     public abstract T xor(T first,T second);
+    public abstract T xorAll(T... set);
+
+    /** convert the arraylist to a correctly typed array (exists because java arrays and type erasure don't play nice)
+     *
+     * @param l The list of elements
+     * @param n The number of elements to copy
+     * @return
+     */
+    public abstract T[] convertToArray(ArrayList<T> l,int n);
 
     public void testInternal(int[][] data, int repeat, DecimalFormat df) {
         long bef, aft;
@@ -37,7 +52,7 @@ public abstract class AbstractBitsetTest2<T> {
                 for (int x = 0; x < data[k].length; ++x) {
                     setBit(bitmap.get(k), data[k][x]);
                 }
-                size += size(bitmap.get(k));
+                size += MemoryMeasurer.measureBytes(bitmap.get(k));
             }
         }
         aft = System.currentTimeMillis();
@@ -56,10 +71,9 @@ public abstract class AbstractBitsetTest2<T> {
         bef = System.currentTimeMillis();
         for (int r = 0; r < repeat; ++r)
             for (int k = 0; k < N; ++k) {
-                T bitmapOr = bitmap.get(0);
-                for (int j = 1; j < k + 1; ++j) {
-                    bitmapOr = or(bitmapOr,bitmap.get(j));
-                }
+
+                T[] subArray = convertToArray(bitmap,k+1);
+                T bitmapOr = orAll(subArray);
                 int[] array = toArray(bitmapOr);
                 bogus += array[array.length - 1];
             }
